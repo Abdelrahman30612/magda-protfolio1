@@ -63,26 +63,26 @@ export const Dashboard: React.FC = () => {
       if (inputHash === TARGET_HASH) {
         setIsAuthenticated(true);
       } else {
-        alert('Invalid Password');
+        alert('كلمة المرور غير صحيحة (Invalid Password)');
       }
     } catch (err) {
-      alert('Invalid Password');
+      alert('كلمة المرور غير صحيحة (Invalid Password)');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this project?')) return;
+    if (!window.confirm('هل أنت متأكد أنك تريد حذف هذا المشروع؟')) return;
     
     const { error } = await supabase.from('projects').delete().eq('id', id);
     if (!error) {
       fetchProjects();
     } else {
-      alert('Error deleting project');
+      alert('حدث خطأ أثناء الحذف (Error deleting project)');
     }
   };
 
   const handleSeedData = async () => {
-    if (!window.confirm('Do you want to upload sample projects? (Brand Identity, Social Media, etc.)')) return;
+    if (!window.confirm('هل تريد رفع بيانات تجريبية؟ (Brand Identity, Social Media, etc.)')) return;
     
     const sampleProjects = [
       {
@@ -114,9 +114,9 @@ export const Dashboard: React.FC = () => {
 
     if (error) {
       console.error('Error seeding data:', error);
-      alert('Error uploading data. Please check if your Supabase URL/Key are correct.');
+      alert('حدث خطأ أثناء رفع البيانات. تأكد من إعدادات Supabase.');
     } else {
-      alert('Sample data uploaded successfully!');
+      alert('تم إضافة البيانات التجريبية بنجاح!');
       fetchProjects();
     }
   };
@@ -152,7 +152,7 @@ export const Dashboard: React.FC = () => {
       
     } catch (error: any) {
       console.error('Error uploading image:', error);
-      alert('Error uploading image. Make sure you created a public bucket named "portfolio-images" in Supabase.');
+      alert('حدث خطأ أثناء رفع الصورة. تأكد من وجود الـ Bucket باسم "portfolio-images" وأنه Public.');
     } finally {
       setUploading(false);
     }
@@ -187,8 +187,17 @@ export const Dashboard: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentProject.title || !currentProject.image) {
-      alert('Title and Image are required');
+    // Trim values to avoid whitespace issues
+    const title = currentProject.title ? currentProject.title.trim() : '';
+    const image = currentProject.image ? currentProject.image.trim() : '';
+    
+    if (!title) {
+      alert('خطأ: من فضلك أدخل عنوان المشروع في خانة "Title".');
+      return;
+    }
+
+    if (!image) {
+      alert('خطأ: من فضلك قم برفع صورة أو وضع رابط الصورة في المربع المخصص لذلك (وليس في خانة Link URL).');
       return;
     }
 
@@ -197,9 +206,9 @@ export const Dashboard: React.FC = () => {
       const { error } = await supabase
         .from('projects')
         .update({
-          title: currentProject.title,
+          title: title,
           category: currentProject.category,
-          image: currentProject.image,
+          image: image,
           link: currentProject.link,
           description: currentProject.description
         })
@@ -211,9 +220,9 @@ export const Dashboard: React.FC = () => {
       const { error } = await supabase
         .from('projects')
         .insert([{
-          title: currentProject.title,
+          title: title,
           category: currentProject.category || 'General',
-          image: currentProject.image,
+          image: image,
           link: currentProject.link || '#',
           description: currentProject.description
         }]);
@@ -334,26 +343,27 @@ export const Dashboard: React.FC = () => {
             <h3 className="text-2xl font-bold mb-6">{isEditing ? 'Edit Project' : 'Add New Project'}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Title</label>
+                <label className="block text-sm text-gray-400 mb-1">Title (عنوان المشروع)</label>
                 <input 
                   className="w-full bg-black/40 border border-white/20 rounded p-3 focus:outline-none focus:border-pink-500" 
                   value={currentProject.title || ''} 
                   onChange={e => setCurrentProject({...currentProject, title: e.target.value})}
-                  required 
+                  placeholder="e.g. Coffee Shop Branding"
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Category</label>
+                <label className="block text-sm text-gray-400 mb-1">Category (القسم)</label>
                 <input 
                   className="w-full bg-black/40 border border-white/20 rounded p-3 focus:outline-none focus:border-pink-500" 
                   value={currentProject.category || ''} 
                   onChange={e => setCurrentProject({...currentProject, category: e.target.value})} 
+                  placeholder="e.g. Branding, UI/UX"
                 />
               </div>
 
-              {/* --- DRAG AND DROP AREA --- */}
+              {/* --- IMAGE AREA --- */}
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Project Image</label>
+                <label className="block text-sm text-gray-400 mb-1">Project Image (صورة المشروع)</label>
                 
                 {/* Hidden File Input */}
                 <input 
@@ -371,7 +381,7 @@ export const Dashboard: React.FC = () => {
                     onDragLeave={onDragLeave}
                     onDrop={onDrop}
                     className={`
-                        w-full h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden group
+                        w-full h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden group mb-2
                         ${isDragging 
                             ? 'border-pink-500 bg-pink-500/10' 
                             : 'border-white/20 bg-black/20 hover:border-pink-500/50 hover:bg-black/40'
@@ -395,16 +405,15 @@ export const Dashboard: React.FC = () => {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                             </svg>
-                            <span className="text-sm">Drag & Drop Image Here</span>
-                            <span className="text-xs opacity-50">or click to browse</span>
+                            <span className="text-sm">Click to Upload Image</span>
                         </div>
                     )}
                 </div>
 
-                {/* Fallback Text Input (Optional) */}
+                {/* Fallback Text Input for Image URL - CHANGED TO BOX STYLE */}
                 <input 
-                  className="w-full bg-transparent border-b border-white/10 rounded-none p-2 mt-2 text-xs text-gray-500 focus:outline-none focus:border-pink-500 focus:text-gray-300 transition-colors" 
-                  placeholder="Or paste image URL directly..."
+                  className="w-full bg-black/40 border border-white/20 rounded p-3 mt-3 focus:outline-none focus:border-pink-500 placeholder-gray-500 text-white" 
+                  placeholder="Or paste image URL here directly (أو ضع رابط الصورة هنا مباشرة)"
                   value={currentProject.image || ''} 
                   onChange={e => setCurrentProject({...currentProject, image: e.target.value})}
                 />
@@ -412,15 +421,16 @@ export const Dashboard: React.FC = () => {
               {/* ------------------------- */}
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Link URL</label>
+                <label className="block text-sm text-gray-400 mb-1">External Link (رابط خارجي للمشروع - اختياري)</label>
                 <input 
                   className="w-full bg-black/40 border border-white/20 rounded p-3 focus:outline-none focus:border-pink-500" 
                   value={currentProject.link || ''} 
                   onChange={e => setCurrentProject({...currentProject, link: e.target.value})}
+                  placeholder="e.g. https://behance.net/..."
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Description</label>
+                <label className="block text-sm text-gray-400 mb-1">Description (الوصف)</label>
                 <textarea 
                   className="w-full bg-black/40 border border-white/20 rounded p-3 focus:outline-none focus:border-pink-500 h-24" 
                   value={currentProject.description || ''} 
